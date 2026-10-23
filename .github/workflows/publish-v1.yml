@@ -1,0 +1,57 @@
+name: Publish verified VIZRO desktop installers
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-v1.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download approved installers and verify SHA256
+        env:
+          INSTALLERS: '[{"name":"VIZRO-STUDIO-1.0.0-Windows-x64-Setup.exe","sha256":"952d2fe5614c373a197452538e0697e22691c8be72fb1a9ca729c08aa1124f28","url":"https://release-assets.githubusercontent.com/github-production-release-asset/1421064728/47598a04-e414-48ae-9a7d-02548c7467ce?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-23T21%3A30%3A39Z&rscd=attachment%3B+filename%3DVIZRO-STUDIO-1.0.0-Windows-x64-Setup.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-23T20%3A30%3A36Z&ske=2026-10-23T21%3A30%3A39Z&sks=b&skv=2018-11-09&sig=1eJoHoTp05sM%2B4JPtOq09DP%2B%2FPR5jh0O6TjtZzNk62c%3D"},{"name":"VIZRO-STUDIO-1.0.0-macOS-x64.dmg","sha256":"573f1c1d8c8748aa047f270fcd225827d8346ad8a3f5e38a6571366f12e33c2b","url":"https://release-assets.githubusercontent.com/github-production-release-asset/1421064728/4d3da4b7-8977-4d3e-914d-8f3e5c704ffe?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-23T21%3A29%3A41Z&rscd=attachment%3B+filename%3DVIZRO-STUDIO-1.0.0-macOS-x64.dmg&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-23T20%3A29%3A12Z&ske=2026-10-23T21%3A29%3A41Z&sks=b&skv=2018-11-09&sig=i4IFIMfFHEL5aDDAom9TuBlKyVVCx0kNF6tRwg9oDNo%3D"},{"name":"VIZRO-STUDIO-1.0.0-macOS-arm64.dmg","sha256":"7a75842b6db934c524a26d0f4f1381b33c403c27d8492b5095e46abacebdb4f8","url":"https://release-assets.githubusercontent.com/github-production-release-asset/1421064728/537a3b96-5df7-4347-81d4-78019e5bb90f?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-23T21%3A31%3A29Z&rscd=attachment%3B+filename%3DVIZRO-STUDIO-1.0.0-macOS-arm64.dmg&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-23T20%3A31%3A04Z&ske=2026-10-23T21%3A31%3A29Z&sks=b&skv=2018-11-09&sig=RjEO9kmUeOtFdUSy56G9%2BIkGoGu%2Fh1pKZHky8rh8l1M%3D"}]'
+          RELEASE_NOTES: "VIZRO STUDIO 1.0.0 — first public desktop release\nPowered by BHP Production.\n\nProduction service: https://vizro.in\n\nDownloads:\n- Windows x64: Setup.exe\n- Mac Intel: macOS-x64.dmg\n- Mac Apple Silicon: macOS-arm64.dmg\n\nThe installers are copied byte-for-byte from the verified native builds. SHA256SUMS.txt provides integrity checks. Native installation/mount and short launch smoke checks passed. Real account login, physical office SMB, midnight rollover and customer-PC performance still require acceptance testing.\n\nUnsigned distribution: Windows publisher signing and Apple Developer ID/notarization are not included. OS security warnings may appear. Native executable auto-updates are disabled in this release; install binary updates manually. Plugin-controlled pages, settings and opening tune continue to load online.\n"
+        run: |
+          python3 - <<'PY'
+          import os,json,urllib.request,hashlib,pathlib
+          pathlib.Path('native').mkdir()
+          sums=[]
+          for item in json.loads(os.environ['INSTALLERS']):
+              p=pathlib.Path('native')/item['name']
+              with urllib.request.urlopen(item['url']) as response,p.open('wb') as f:
+                  while chunk:=response.read(1024*1024):f.write(chunk)
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256'],p.name
+              sums.append(item['sha256']+'  '+p.name)
+              print('Verified '+p.name)
+          pathlib.Path('native/SHA256SUMS.txt').write_text('\n'.join(sums)+'\n')
+          pathlib.Path('release-notes.md').write_text(os.environ['RELEASE_NOTES'])
+          PY
+      - name: Publish public GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release create v1.0.0 --target "${{ github.sha }}" --title 'VIZRO STUDIO 1.0.0' --notes-file release-notes.md --draft
+          gh release upload v1.0.0 native/*
+          gh release edit v1.0.0 --draft=false --latest
+      - name: Verify anonymous public downloads
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import urllib.request,json,hashlib,pathlib,os
+          url='https://api.github.com/repos/'+os.environ['GH_REPO']+'/releases/tags/v1.0.0'
+          r=json.load(urllib.request.urlopen(url));assert not r['draft']
+          assert len(r['assets'])==4
+          for item in r['assets']:
+              if item['name'].endswith(('.exe','.dmg')):
+                  h=hashlib.sha256()
+                  with urllib.request.urlopen(item['browser_download_url']) as response:
+                      while chunk:=response.read(1024*1024):h.update(chunk)
+                  expected=hashlib.sha256(pathlib.Path('native',item['name']).read_bytes()).hexdigest()
+                  assert h.hexdigest()==expected
+                  print('ANONYMOUS_DOWNLOAD_OK '+item['browser_download_url'])
+          PY
