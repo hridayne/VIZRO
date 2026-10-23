@@ -1,57 +1,25 @@
-name: Publish verified VIZRO desktop installers
+name: Verify VIZRO public downloads
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/publish-v1.yml]
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  publish:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Download approved installers and verify SHA256
-        env:
-          INSTALLERS: '[{"name":"VIZRO-STUDIO-1.0.0-Windows-x64-Setup.exe","sha256":"952d2fe5614c373a197452538e0697e22691c8be72fb1a9ca729c08aa1124f28","download":"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzQ3NTk4YTA0LWU0MTQtNDhhZS05YTdkLTAyNTQ4Yzc0NjdjZT9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yM1QyMSUzQTI4JTNBNTdaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMC1XaW5kb3dzLXg2NC1TZXR1cC5leGUmcnNjdD1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbSZza29pZD05NmMyZDQxMC01NzExLTQzYTEtYWVkZC1hYjE5NDdhYTdhYjAmc2t0aWQ9Mzk4YTY2NTQtOTk3Yi00N2U5LWIxMmItOTUxNWI4OTZiNGRlJnNrdD0yMDI2LTEwLTIzVDIwJTNBMjglM0ExOFomc2tlPTIwMjYtMTAtMjNUMjElM0EyOCUzQTU3WiZza3M9YiZza3Y9MjAxOC0xMS0wOSZzaWc9R0ZWcEZKaTZydUQxSUlia2FDdUUwc2hsWnUlMkJUb0tkQTNET25wJTJCWjlJZGMlM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNU1qYzVNVGczTUN3aWJtSm1Jam94TnpreU56ZzRNamN3TENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEub0VycHdLNkJCdTRlejNpQ1MyOThzeE9BVkRwMWozVUhCalF6MmZBWVI4byZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMC1XaW5kb3dzLXg2NC1TZXR1cC5leGUmcmVzcG9uc2UtY29udGVudC10eXBlPWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFt"},{"name":"VIZRO-STUDIO-1.0.0-macOS-x64.dmg","sha256":"573f1c1d8c8748aa047f270fcd225827d8346ad8a3f5e38a6571366f12e33c2b","download":"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzRkM2RhNGI3LTg5NzctNGQzZS05MTRkLThmM2U1YzcwNGZmZT9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yM1QyMSUzQTMxJTNBMTRaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMC1tYWNPUy14NjQuZG1nJnJzY3Q9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0mc2tvaWQ9OTZjMmQ0MTAtNTcxMS00M2ExLWFlZGQtYWIxOTQ3YWE3YWIwJnNrdGlkPTM5OGE2NjU0LTk5N2ItNDdlOS1iMTJiLTk1MTViODk2YjRkZSZza3Q9MjAyNi0xMC0yM1QyMCUzQTMwJTNBMzhaJnNrZT0yMDI2LTEwLTIzVDIxJTNBMzElM0ExNFomc2tzPWImc2t2PTIwMTgtMTEtMDkmc2lnPUJ2bms0Q3Qwa1FGODBZMnV6dFJ1bGZVZDhieTNhTXMlMkZGN2JMc0J3TGh0OCUzRCZqd3Q9ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBjM01pT2lKbmFYUm9kV0l1WTI5dElpd2lZWFZrSWpvaWNtVnNaV0Z6WlMxaGMzTmxkSE11WjJsMGFIVmlkWE5sY21OdmJuUmxiblF1WTI5dElpd2lhMlY1SWpvaWEyVjVNU0lzSW1WNGNDSTZNVGM1TWpjNU1UZzNNQ3dpYm1KbUlqb3hOemt5TnpnNE1qY3dMQ0p3WVhSb0lqb2ljbVZzWldGelpXRnpjMlYwY0hKdlpIVmpkR2x2Ymk1aWJHOWlMbU52Y21VdWQybHVaRzkzY3k1dVpYUWlmUS5vRXJwd0s2QkJ1NGV6M2lDUzI5OHN4T0FWRHAxajNVSEJqUXoyZkFZUjhvJnJlc3BvbnNlLWNvbnRlbnQtZGlzcG9zaXRpb249YXR0YWNobWVudCUzQiUyMGZpbGVuYW1lJTNEVklaUk8tU1RVRElPLTEuMC4wLW1hY09TLXg2NC5kbWcmcmVzcG9uc2UtY29udGVudC10eXBlPWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFt"},{"name":"VIZRO-STUDIO-1.0.0-macOS-arm64.dmg","sha256":"7a75842b6db934c524a26d0f4f1381b33c403c27d8492b5095e46abacebdb4f8","download":"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzUzN2EzYjk2LTVkZjctNDM0Ny04MWQ0LTc4MDE5ZTViYjkwZj9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yM1QyMSUzQTI4JTNBMDJaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMC1tYWNPUy1hcm02NC5kbWcmcnNjdD1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbSZza29pZD05NmMyZDQxMC01NzExLTQzYTEtYWVkZC1hYjE5NDdhYTdhYjAmc2t0aWQ9Mzk4YTY2NTQtOTk3Yi00N2U5LWIxMmItOTUxNWI4OTZiNGRlJnNrdD0yMDI2LTEwLTIzVDIwJTNBMjclM0ExNVomc2tlPTIwMjYtMTAtMjNUMjElM0EyOCUzQTAyWiZza3M9YiZza3Y9MjAxOC0xMS0wOSZzaWc9Y0tQR3IzdTB5V1dVd2Z4JTJGaVVlMm9iZWdISWYlMkJORndoVEFjTlRkemZpYWMlM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNU1qYzVNVGczTUN3aWJtSm1Jam94TnpreU56ZzRNamN3TENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEub0VycHdLNkJCdTRlejNpQ1MyOThzeE9BVkRwMWozVUhCalF6MmZBWVI4byZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMC1tYWNPUy1hcm02NC5kbWcmcmVzcG9uc2UtY29udGVudC10eXBlPWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFt"}]'
-          RELEASE_NOTES: "VIZRO STUDIO 1.0.0 — first public desktop release\nPowered by BHP Production.\n\nProduction service: https://vizro.in\n\nDownloads:\n- Windows x64: Setup.exe\n- Mac Intel: macOS-x64.dmg\n- Mac Apple Silicon: macOS-arm64.dmg\n\nThe installers are copied byte-for-byte from the verified native builds. SHA256SUMS.txt provides integrity checks. Native installation/mount and short launch smoke checks passed. Real account login, physical office SMB, midnight rollover and customer-PC performance still require acceptance testing.\n\nUnsigned distribution: Windows publisher signing and Apple Developer ID/notarization are not included. OS security warnings may appear. Native executable auto-updates are disabled in this release; install binary updates manually. Plugin-controlled pages, settings and opening tune continue to load online.\n"
+      - name: Verify public installer checksums without authentication
         run: |
           python3 - <<'PY'
-          import os,json,urllib.request,hashlib,pathlib,base64
-          pathlib.Path('native').mkdir()
-          sums=[]
-          for item in json.loads(os.environ['INSTALLERS']):
-              p=pathlib.Path('native')/item['name']
-              with urllib.request.urlopen(base64.b64decode(item['download']).decode()) as response,p.open('wb') as f:
-                  while chunk:=response.read(1024*1024):f.write(chunk)
-              assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256'],p.name
-              sums.append(item['sha256']+'  '+p.name)
-              print('Verified '+p.name)
-          pathlib.Path('native/SHA256SUMS.txt').write_text('\n'.join(sums)+'\n')
-          pathlib.Path('release-notes.md').write_text(os.environ['RELEASE_NOTES'])
-          PY
-      - name: Publish public GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          gh release create v1.0.0 --target "${{ github.sha }}" --title 'VIZRO STUDIO 1.0.0' --notes-file release-notes.md --draft
-          gh release upload v1.0.0 native/*
-          gh release edit v1.0.0 --draft=false --latest
-      - name: Verify anonymous public downloads
-        env:
-          GH_REPO: ${{ github.repository }}
-        run: |
-          python3 - <<'PY'
-          import urllib.request,json,hashlib,pathlib,os
-          url='https://api.github.com/repos/'+os.environ['GH_REPO']+'/releases/tags/v1.0.0'
-          r=json.load(urllib.request.urlopen(url));assert not r['draft']
-          assert len(r['assets'])==4
-          for item in r['assets']:
-              if item['name'].endswith(('.exe','.dmg')):
-                  h=hashlib.sha256()
-                  with urllib.request.urlopen(item['browser_download_url']) as response:
-                      while chunk:=response.read(1024*1024):h.update(chunk)
-                  expected=hashlib.sha256(pathlib.Path('native',item['name']).read_bytes()).hexdigest()
-                  assert h.hexdigest()==expected
-                  print('ANONYMOUS_DOWNLOAD_OK '+item['browser_download_url'])
+          import urllib.request,json,hashlib
+          release=json.load(urllib.request.urlopen('https://api.github.com/repos/hridayne/VIZRO/releases/tags/v1.0.0'))
+          assert not release['draft']
+          assets={a['name']:a['browser_download_url'] for a in release['assets']}
+          sums=urllib.request.urlopen(assets['SHA256SUMS.txt']).read().decode()
+          for line in sums.splitlines():
+              expected,name=line.split()
+              h=hashlib.sha256()
+              with urllib.request.urlopen(assets[name]) as r:
+                  while chunk:=r.read(1024*1024):h.update(chunk)
+              assert h.hexdigest()==expected,name
+              print('Anonymous download verified: '+name)
           PY
