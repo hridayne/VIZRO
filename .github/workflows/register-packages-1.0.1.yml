@@ -1,0 +1,70 @@
+name: Sign final VIZRO package checksum registration
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/register-packages-1.0.1.yml]
+permissions:
+  contents: read
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Record locally measured delivery package digests
+        env:
+          SUMS: "ca312e6696c49368ffc1f412469c4adf6245f136c5a6c39133d301d20cd53926  VIZRO-STUDIO-Plugin-v1.0.1.zip\ncc6b08688370ea5735aef383331a9659c61b46f6ad90d190fac275485dad9048  VIZRO-STUDIO-Theme-v1.0.1.zip\nc79904427944ca3352f32ab97948e6782c42d38dea51d114edc8801f4ca78a4b  VIZRO-STUDIO-v1.0.1-FINAL-All-Products.zip\n50ec65886b8cfec4a0854f1f3a1ddf9e4411761053fdeabe4d8156cb5ecf9b81  VIZRO-STUDIO-v1.0.1-Final-Release-Guide.md\n64aef0956b31589dbb7e3a5509e0b5e91a997d6efffeef9db36a0d494fe6847a  VIZRO-STUDIO-v1.0.1-Download-Links.txt\n1d5d994c409b74e91aca5524ef66f300794e5fef166b736b59ab784ee84a1ed2  VIZRO-STUDIO-v1.0.1-FINAL-SHA256.txt\n"
+        run: |
+          python3 - <<'PY'
+          import pathlib,os,json
+          pathlib.Path('FINAL-PACKAGE-SHA256SUMS.txt').write_text(os.environ['SUMS'])
+          statement={
+            'kind':'local-delivery-package-checksum-registration',
+            'version':'1.0.1',
+            'owner':'Hridaya Nanda Sarma',
+            'businessApproval':'BHP Production, owner instruction',
+            'scope':'The subject digests were measured and validated by the local delivery packager. This workflow signs their registration under hridayne/VIZRO. It did not receive, build, execute, scan or independently test the WordPress or combined packages.',
+            'localTestEvidence':{'wordpressFunctionalHttpDomChecks':286,'wordpressSyntaxChecks':169,'nativeSourceTests':57,'zipCrcAndSourceByteComparison':'passed locally'},
+            'appVerification':'Separate native build, download and signature evidence is attached to release v1.0.1.',
+            'endorsement':'No claim of OpenAI/ChatGPT or GitHub product endorsement, malware certification or OS publisher signing.'
+          }
+          pathlib.Path('package-registration.json').write_text(json.dumps(statement,indent=2))
+          PY
+      - name: Sign package checksum registration
+        id: sign
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-checksums: FINAL-PACKAGE-SHA256SUMS.txt
+          predicate-type: https://github.com/hridayne/VIZRO/attestations/package-checksum-registration/v1
+          predicate-path: package-registration.json
+      - name: Publish signature evidence without publishing private package bytes
+        env:
+          BUNDLE: ${{ steps.sign.outputs.bundle-path }}
+          RECORD: ${{ steps.sign.outputs.attestation-url }}
+        run: |
+          set -euo pipefail
+          cp "$BUNDLE" VIZRO-STUDIO-v1.0.1-Package-Signature.sigstore.json
+          cat > PACKAGE-VERIFICATION.txt <<'GUIDE'
+          VIZRO STUDIO v1.0.1 final package signature
+          Owner: Hridaya Nanda Sarma
+          Business approval: BHP Production, supplied by the owner.
+
+          Scope: GitHub Actions/Sigstore signs registration of the locally measured package digests.
+          Local checks validated the ZIPs and source bytes. This GitHub job did not download, build, execute, scan or independently test the WordPress/combined packages.
+          The private package bytes are not published by this workflow.
+          No OpenAI/GitHub endorsement, malware-free certification or OS publisher signing is asserted.
+
+          To verify a delivered file:
+          gh attestation verify FILE --repo hridayne/VIZRO --bundle VIZRO-STUDIO-v1.0.1-Package-Signature.sigstore.json --predicate-type https://github.com/hridayne/VIZRO/attestations/package-checksum-registration/v1
+
+          Check every local file against FINAL-PACKAGE-SHA256SUMS.txt.
+          The separately signed app release-integrity proof is also included in the combined archive.
+          GUIDE
+          printf '\nSignature record: %s\n' "$RECORD" >> PACKAGE-VERIFICATION.txt
+          gh release upload v1.0.1 VIZRO-STUDIO-v1.0.1-Package-Signature.sigstore.json FINAL-PACKAGE-SHA256SUMS.txt PACKAGE-VERIFICATION.txt package-registration.json --clobber
+          echo "PACKAGE_SIGNATURE_RECORD=$RECORD"
