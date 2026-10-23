@@ -1,0 +1,122 @@
+name: Publish and sign VIZRO 1.0.1 security update
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-security-1.0.1.yml]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      PREDICATE_TYPE: https://github.com/hridayne/VIZRO/attestations/release-verification/v1
+    steps:
+      - name: Validate approved security installers
+        env:
+          INSTALLERS: '[{"name":"VIZRO-STUDIO-1.0.1-Windows-x64-Setup.exe","sha256":"2cef63d8bddf7e43de58aab49af3f36c18e7e09d0f9186e35ffc41dfad48efa9","download":"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzFiNWU0MDdhLTM5MjktNDJkMy05MDYzLTgzZjFjYjZiOGQ4Nj9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yM1QyMiUzQTA4JTNBMDhaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMS1XaW5kb3dzLXg2NC1TZXR1cC5leGUmcnNjdD1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbSZza29pZD05NmMyZDQxMC01NzExLTQzYTEtYWVkZC1hYjE5NDdhYTdhYjAmc2t0aWQ9Mzk4YTY2NTQtOTk3Yi00N2U5LWIxMmItOTUxNWI4OTZiNGRlJnNrdD0yMDI2LTEwLTIzVDIxJTNBMDclM0EzNVomc2tlPTIwMjYtMTAtMjNUMjIlM0EwOCUzQTA4WiZza3M9YiZza3Y9MjAxOC0xMS0wOSZzaWc9U2JoSURjZURZUVA0T0FxYktMNVhvaGUyZVhvV2JZbnJpU2FCZW5aaGhkNCUzRCZqd3Q9ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBjM01pT2lKbmFYUm9kV0l1WTI5dElpd2lZWFZrSWpvaWNtVnNaV0Z6WlMxaGMzTmxkSE11WjJsMGFIVmlkWE5sY21OdmJuUmxiblF1WTI5dElpd2lhMlY1SWpvaWEyVjVNU0lzSW1WNGNDSTZNVGM1TWpjNU16UTNOQ3dpYm1KbUlqb3hOemt5TnpnNU9EYzBMQ0p3WVhSb0lqb2ljbVZzWldGelpXRnpjMlYwY0hKdlpIVmpkR2x2Ymk1aWJHOWlMbU52Y21VdWQybHVaRzkzY3k1dVpYUWlmUS5kZjRubGd0Q2RxX09yTUVWYkNmR09CVkRIcC03Y3I0RS16Um56cTBGc2RzJnJlc3BvbnNlLWNvbnRlbnQtZGlzcG9zaXRpb249YXR0YWNobWVudCUzQiUyMGZpbGVuYW1lJTNEVklaUk8tU1RVRElPLTEuMC4xLVdpbmRvd3MteDY0LVNldHVwLmV4ZSZyZXNwb25zZS1jb250ZW50LXR5cGU9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0="},{"name":"VIZRO-STUDIO-1.0.1-macOS-arm64.dmg","sha256":"2ad66e4cc9519fd183ee689388ccabdd275a188c6cd4ddb510a8d9aa21480918","download":"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzFiYjI5NzRmLTMwMWMtNGU5MS1hZjVkLWRlNTI0MDUwNjVhYz9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yM1QyMSUzQTUzJTNBMDVaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMS1tYWNPUy1hcm02NC5kbWcmcnNjdD1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbSZza29pZD05NmMyZDQxMC01NzExLTQzYTEtYWVkZC1hYjE5NDdhYTdhYjAmc2t0aWQ9Mzk4YTY2NTQtOTk3Yi00N2U5LWIxMmItOTUxNWI4OTZiNGRlJnNrdD0yMDI2LTEwLTIzVDIwJTNBNTIlM0EyN1omc2tlPTIwMjYtMTAtMjNUMjElM0E1MyUzQTA1WiZza3M9YiZza3Y9MjAxOC0xMS0wOSZzaWc9SmxLVlJSMmRQUERtNmJyZXhxaGw3ayUyQlZDWEJrMlNYQUM4SmV3UXp1dXR3JTNEJmp3dD1leUowZVhBaU9pSktWMVFpTENKaGJHY2lPaUpJVXpJMU5pSjkuZXlKcGMzTWlPaUpuYVhSb2RXSXVZMjl0SWl3aVlYVmtJam9pY21Wc1pXRnpaUzFoYzNObGRITXVaMmwwYUhWaWRYTmxjbU52Ym5SbGJuUXVZMjl0SWl3aWEyVjVJam9pYTJWNU1TSXNJbVY0Y0NJNk1UYzVNamM1TXpRM05Dd2libUptSWpveE56a3lOemc1T0RjMExDSndZWFJvSWpvaWNtVnNaV0Z6WldGemMyVjBjSEp2WkhWamRHbHZiaTVpYkc5aUxtTnZjbVV1ZDJsdVpHOTNjeTV1WlhRaWZRLmRmNG5sZ3RDZHFfT3JNRVZiQ2ZHT0JWREhwLTdjcjRFLXpSbnpxMEZzZHMmcmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj1hdHRhY2htZW50JTNCJTIwZmlsZW5hbWUlM0RWSVpSTy1TVFVESU8tMS4wLjEtbWFjT1MtYXJtNjQuZG1nJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ=="},{"name":"VIZRO-STUDIO-1.0.1-macOS-x64.dmg","sha256":"b9ef0fec206886dc2c956e6a7f2592e7f7c8604d6a8eafdc25071ab66105291c","download":"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzYxMTA3MzMxLThiYjctNDFiNi1hYjFkLTJjNGRhMWNjZjg3ZD9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yM1QyMSUzQTUyJTNBMjVaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMS1tYWNPUy14NjQuZG1nJnJzY3Q9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0mc2tvaWQ9OTZjMmQ0MTAtNTcxMS00M2ExLWFlZGQtYWIxOTQ3YWE3YWIwJnNrdGlkPTM5OGE2NjU0LTk5N2ItNDdlOS1iMTJiLTk1MTViODk2YjRkZSZza3Q9MjAyNi0xMC0yM1QyMCUzQTUyJTNBMjNaJnNrZT0yMDI2LTEwLTIzVDIxJTNBNTIlM0EyNVomc2tzPWImc2t2PTIwMTgtMTEtMDkmc2lnPUZIdVVSVEpvMXd4VURZNkZ5UHhXc056MGtDWVpLYmthVHRybU5JaHl3NmMlM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNU1qYzVNelEzTkN3aWJtSm1Jam94TnpreU56ZzVPRGMwTENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEuZGY0bmxndENkcV9Pck1FVmJDZkdPQlZESHAtN2NyNEUtelJuenEwRnNkcyZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMS1tYWNPUy14NjQuZG1nJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ=="}]'
+          RELEASE_NOTES: "VIZRO STUDIO 1.0.1 — security update\nPowered by BHP Production.\nProduction: https://vizro.in\n\nChanges:\n- Updated the desktop runtime from Electron 41.0.0 to current stable Electron 45.0.0, including its Chromium/Node runtime updates.\n- Blocked Windows reserved device filenames, including COM2–COM9, LPT2–LPT9, superscript aliases and reserved names hidden before additional extensions.\n- Rejected ambiguous SMB path components, including trailing periods/spaces and colon/alternate-stream syntax.\n- Kept existing user/channel/day authorization, HTTPS origin checks, sandboxing and context isolation.\n\nValidation:\n57 source tests pass. All three native targets passed installation/mount and short launch checks on native GitHub runners. Installer hashes were verified before upload. The attached GitHub Actions/Sigstore attestation signs the published-release checksum-verification statement; every installer signature was verified. It is not a claim that this public workflow built the installers.\n\nThis is not a malware-free guarantee or a GitHub endorsement. Windows Authenticode and Apple Developer ID/notarization are not included; OS installation warnings may remain. Native binary updates require manual installation. Plugin-controlled settings and pages continue to load online.\n\nReal account login, physical office SMB permissions, midnight rollover and customer-device performance still require acceptance testing.\n"
+        run: |
+          python3 - <<'PY'
+          import pathlib,os,json,base64,urllib.request,hashlib,datetime
+          pathlib.Path('native').mkdir()
+          assets=json.loads(os.environ['INSTALLERS']);assert len(assets)==3
+          sums=[]
+          for item in assets:
+              p=pathlib.Path('native',item['name']);assert p.name==item['name'] and '1.0.1' in p.name
+              with urllib.request.urlopen(base64.b64decode(item['download']).decode()) as r,p.open('wb') as f:
+                  while chunk:=r.read(1024*1024):f.write(chunk)
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256'],p.name
+              sums.append(item['sha256']+'  '+p.name)
+              print('VERIFIED_SECURITY_INSTALLER '+p.name)
+          pathlib.Path('native/SHA256SUMS.txt').write_text('\n'.join(sums)+'\n')
+          pathlib.Path('release-notes.md').write_text(os.environ['RELEASE_NOTES'])
+          predicate={
+            'kind':'published-release-checksum-verification',
+            'release':'https://github.com/hridayne/VIZRO/releases/tag/v1.0.1',
+            'runtime':'Electron 45.0.0',
+            'verifiedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'verificationWorkflowRun':'https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],
+            'result':'Three security-update installers match the approved SHA-256 values.',
+            'scope':'This is release-integrity verification. This public workflow did not build the installers. No assertion of malware scanning, Windows Authenticode, or Apple Developer ID/notarization.'
+          }
+          pathlib.Path('release-verification.json').write_text(json.dumps(predicate,indent=2))
+          PY
+      - name: Prepare public draft with approved installers
+        run: |
+          set -euo pipefail
+          gh release create v1.0.1 --draft --target "$GITHUB_SHA" --title 'VIZRO STUDIO 1.0.1 — Security Update' --notes-file release-notes.md
+          gh release upload v1.0.1 native/*
+      - name: Sign verification attestation with GitHub Actions and Sigstore
+        id: sign
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-checksums: native/SHA256SUMS.txt
+          predicate-type: https://github.com/hridayne/VIZRO/attestations/release-verification/v1
+          predicate-path: release-verification.json
+      - name: Verify signatures for all three installers
+        env:
+          BUNDLE_PATH: ${{ steps.sign.outputs.bundle-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in native/*.exe native/*.dmg; do
+            gh attestation verify "$file" --repo "$GH_REPO" --bundle "$BUNDLE_PATH" --predicate-type "$PREDICATE_TYPE"
+          done
+      - name: Attach signed verification bundle to the existing release
+        env:
+          BUNDLE_PATH: ${{ steps.sign.outputs.bundle-path }}
+          ATTESTATION_URL: ${{ steps.sign.outputs.attestation-url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$BUNDLE_PATH" VIZRO-STUDIO-1.0.1-Release-Attestation.sigstore.json
+          cat > VERIFY-RELEASE.txt <<'GUIDE'
+          VIZRO STUDIO 1.0.1 — signed release-integrity attestation
+          Signer identity: hridayne/VIZRO GitHub Actions workflow via Sigstore.
+          This verifies release-file identity and the signed checksum-verification statement.
+          It is not Windows Authenticode, Apple Developer ID/notarization, malware certification, or a statement that GitHub built the installers.
+
+          Download your installer and VIZRO-STUDIO-1.0.1-Release-Attestation.sigstore.json from this GitHub Release.
+          With GitHub CLI installed, run (replace INSTALLER_FILENAME with your file):
+          gh attestation verify INSTALLER_FILENAME --repo hridayne/VIZRO --bundle VIZRO-STUDIO-1.0.1-Release-Attestation.sigstore.json --predicate-type https://github.com/hridayne/VIZRO/attestations/release-verification/v1
+
+          All three installer signatures were verified by the release verification workflow.
+          Existing EXE/DMG download URLs and installer bytes remain the same.
+          GUIDE
+          printf '\nAttestation record: %s\n' "$ATTESTATION_URL" >> VERIFY-RELEASE.txt
+          gh release upload v1.0.1 VIZRO-STUDIO-1.0.1-Release-Attestation.sigstore.json release-verification.json VERIFY-RELEASE.txt --clobber
+          gh release view v1.0.1 --json body --jq .body > release-notes.md
+          python3 - <<'PY'
+          import pathlib,os
+          p=pathlib.Path('release-notes.md');text=p.read_text()
+          heading='## Signed release-integrity attestation'
+          text=text.split(heading)[0].rstrip()
+          p.write_text(text+'\n\n'+heading+'\n\nGitHub Actions/Sigstore signed checksum-verification attestation is attached for all three installers. Signatures verified successfully.\n\nRecord: '+os.environ['ATTESTATION_URL']+'\n\nSee VERIFY-RELEASE.txt for verification instructions. This attests release integrity, not installer build provenance or OS publisher signing; the installation warning information above still applies.\n')
+          PY
+          gh release edit v1.0.1 --notes-file release-notes.md
+          echo "SIGNED_ATTESTATION_URL=$ATTESTATION_URL"
+      - name: Publish and verify anonymous downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release edit v1.0.1 --draft=false --latest
+          python3 - <<'PY'
+          import urllib.request,json,hashlib,pathlib
+          release=json.load(urllib.request.urlopen('https://api.github.com/repos/hridayne/VIZRO/releases/tags/v1.0.1'))
+          assert not release['draft']
+          assets={a['name']:a['browser_download_url'] for a in release['assets']}
+          for line in pathlib.Path('native/SHA256SUMS.txt').read_text().splitlines():
+              expected,name=line.split()
+              h=hashlib.sha256()
+              with urllib.request.urlopen(assets[name]) as response:
+                  while chunk:=response.read(1024*1024):h.update(chunk)
+              assert h.hexdigest()==expected,name
+              print('ANONYMOUS_SECURITY_DOWNLOAD_OK '+assets[name])
+          PY
