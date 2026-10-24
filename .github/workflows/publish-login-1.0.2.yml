@@ -1,0 +1,73 @@
+name: Publish VIZRO 1.0.2 login-fix installers
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-login-1.0.2.yml]
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env: {GH_TOKEN: '${{ github.token }}', GH_REPO: '${{ github.repository }}'}
+    steps:
+      - name: Download approved binaries and verify bytes
+        run: |
+          set -euo pipefail
+          mkdir native
+          python3 - <<'PY'
+          import json,base64,pathlib,hashlib,urllib.request
+          items=json.loads("[{\"name\":\"VIZRO-STUDIO-1.0.2-Windows-x64-Setup.exe\",\"sha256\":\"aa5bdb31b9426d4b3bf615c150ec5926ea81ae5eacbd4ed1d19f42475dd71b81\",\"url64\":\"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzRhYzhkMGUyLTkwYzAtNGRhYS04OTgyLWY0M2Q1ZDkxMjc2Yj9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yNFQwNiUzQTE3JTNBMTdaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMi1XaW5kb3dzLXg2NC1TZXR1cC5leGUmcnNjdD1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbSZza29pZD05NmMyZDQxMC01NzExLTQzYTEtYWVkZC1hYjE5NDdhYTdhYjAmc2t0aWQ9Mzk4YTY2NTQtOTk3Yi00N2U5LWIxMmItOTUxNWI4OTZiNGRlJnNrdD0yMDI2LTEwLTI0VDA1JTNBMTclM0EwM1omc2tlPTIwMjYtMTAtMjRUMDYlM0ExNyUzQTE3WiZza3M9YiZza3Y9MjAxOC0xMS0wOSZzaWc9WGR5azdDRlhwU0MwVzZDaEphMHRLMUlaRGhvNEdqSkJHVkZZSHk2MWRDWSUzRCZqd3Q9ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBjM01pT2lKbmFYUm9kV0l1WTI5dElpd2lZWFZrSWpvaWNtVnNaV0Z6WlMxaGMzTmxkSE11WjJsMGFIVmlkWE5sY21OdmJuUmxiblF1WTI5dElpd2lhMlY1SWpvaWEyVjVNU0lzSW1WNGNDSTZNVGM1TWpneU16STBOaXdpYm1KbUlqb3hOemt5T0RFNU5qUTJMQ0p3WVhSb0lqb2ljbVZzWldGelpXRnpjMlYwY0hKdlpIVmpkR2x2Ymk1aWJHOWlMbU52Y21VdWQybHVaRzkzY3k1dVpYUWlmUS5tdlh0NldsWU5IUHZBZHIwZnFvRDZ2TnpsYTM0LVMzNHhYWlNJd2xvUGVrJnJlc3BvbnNlLWNvbnRlbnQtZGlzcG9zaXRpb249YXR0YWNobWVudCUzQiUyMGZpbGVuYW1lJTNEVklaUk8tU1RVRElPLTEuMC4yLVdpbmRvd3MteDY0LVNldHVwLmV4ZSZyZXNwb25zZS1jb250ZW50LXR5cGU9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0=\"},{\"name\":\"VIZRO-STUDIO-1.0.2-macOS-x64.dmg\",\"sha256\":\"ec9a60b8e9a0b995adde49567ce5886a997ca7a9f028f4021ad837cfba141c77\",\"url64\":\"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4L2VmMGE4MTRhLTVjNTktNDA0YS04YTMzLWE5MTIzZWUyOTk4Nj9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yNFQwNiUzQTE4JTNBMDdaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMi1tYWNPUy14NjQuZG1nJnJzY3Q9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0mc2tvaWQ9OTZjMmQ0MTAtNTcxMS00M2ExLWFlZGQtYWIxOTQ3YWE3YWIwJnNrdGlkPTM5OGE2NjU0LTk5N2ItNDdlOS1iMTJiLTk1MTViODk2YjRkZSZza3Q9MjAyNi0xMC0yNFQwNSUzQTE3JTNBNTlaJnNrZT0yMDI2LTEwLTI0VDA2JTNBMTglM0EwN1omc2tzPWImc2t2PTIwMTgtMTEtMDkmc2lnPVpoM1puN3M1TkglMkJzUjVKaUxwczE3ViUyQjFQSGxEd0VCbSUyQnZZSjg2TWlpT28lM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNU1qZ3lNekkwTml3aWJtSm1Jam94TnpreU9ERTVOalEyTENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEubXZYdDZXbFlOSFB2QWRyMGZxb0Q2dk56bGEzNC1TMzR4WFpTSXdsb1BlayZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMi1tYWNPUy14NjQuZG1nJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ==\"},{\"name\":\"VIZRO-STUDIO-1.0.2-macOS-arm64.dmg\",\"sha256\":\"3e1e9a43d539944e7b950fddde438533430fb625318dfd5fd4aedeee8953d25e\",\"url64\":\"aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xNDIxMDY0NzI4LzlhMThiMGUxLTg1ZGEtNDY3Yi1hMGI0LTQ1ODFkYzdlYjk3ZT9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0xMC0yNFQwNiUzQTA5JTNBMTBaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFZJWlJPLVNUVURJTy0xLjAuMi1tYWNPUy1hcm02NC5kbWcmcnNjdD1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbSZza29pZD05NmMyZDQxMC01NzExLTQzYTEtYWVkZC1hYjE5NDdhYTdhYjAmc2t0aWQ9Mzk4YTY2NTQtOTk3Yi00N2U5LWIxMmItOTUxNWI4OTZiNGRlJnNrdD0yMDI2LTEwLTI0VDA1JTNBMDklM0EwNFomc2tlPTIwMjYtMTAtMjRUMDYlM0EwOSUzQTEwWiZza3M9YiZza3Y9MjAxOC0xMS0wOSZzaWc9UWtPREtJeVB0bTJMMkZMV3dLR0FMZlZJdmdsMU1FNEk2JTJCdFB4d1A3ZjNFJTNEJmp3dD1leUowZVhBaU9pSktWMVFpTENKaGJHY2lPaUpJVXpJMU5pSjkuZXlKcGMzTWlPaUpuYVhSb2RXSXVZMjl0SWl3aVlYVmtJam9pY21Wc1pXRnpaUzFoYzNObGRITXVaMmwwYUhWaWRYTmxjbU52Ym5SbGJuUXVZMjl0SWl3aWEyVjVJam9pYTJWNU1TSXNJbVY0Y0NJNk1UYzVNamd5TXpJME55d2libUptSWpveE56a3lPREU1TmpRM0xDSndZWFJvSWpvaWNtVnNaV0Z6WldGemMyVjBjSEp2WkhWamRHbHZiaTVpYkc5aUxtTnZjbVV1ZDJsdVpHOTNjeTV1WlhRaWZRLmx3QVRHTVRVYmJBLVJJR1JvTG9Kb2MzWW9TYW14X1BCTU5MWVFYNkxmT1EmcmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj1hdHRhY2htZW50JTNCJTIwZmlsZW5hbWUlM0RWSVpSTy1TVFVESU8tMS4wLjItbWFjT1MtYXJtNjQuZG1nJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ==\"}]")
+          for item in items:
+              p=pathlib.Path('native')/item['name']
+              with urllib.request.urlopen(base64.b64decode(item['url64']).decode(),timeout=180) as r,p.open('wb') as f:
+                  import shutil;shutil.copyfileobj(r,f)
+              assert p.stat().st_size>100000000
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256']
+              with p.open('rb') as f:
+                  if p.suffix=='.exe':assert f.read(2)==b'MZ'
+                  else:f.seek(-512,2);assert f.read(4)==b'koly'
+          pathlib.Path('native/SHA256SUMS.txt').write_text(''.join(i['sha256']+'  '+i['name']+'\n' for i in items))
+          predicate={'version':'1.0.2','sourceRun':'https://github.com/hridayne/ndr-studio-desktop/actions/runs/40065806991','checks':'Downloaded release binaries matched expected SHA-256 and native container signatures. Native runner install/mount and short launch smoke passed.','limitations':'This is release integrity verification, not build provenance, malware certification, OS publisher signing, Apple notarization or production login acceptance. Plugin 1.0.2 server deployment is required.'}
+          pathlib.Path('native/release-verification.json').write_text(json.dumps(predicate,indent=2))
+          PY
+      - name: Attest verified release integrity
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: |
+            native/*.exe
+            native/*.dmg
+          predicate-type: https://github.com/hridayne/VIZRO/attestations/release-verification/v1
+          predicate-path: native/release-verification.json
+      - name: Publish installer-only release for acceptance testing
+        env: {BUNDLE: '${{ steps.attest.outputs.bundle-path }}'}
+        run: |
+          set -euo pipefail
+          cp "$BUNDLE" native/VIZRO-STUDIO-1.0.2-Release-Attestation.sigstore.json
+          cat > notes.md <<'EOF'
+          Fixes desktop navigation to the custom https://vizro.in/login/ page and keeps the centered opening visible for 7 seconds from ready-to-show.
+
+          **Install VIZRO STUDIO Plugin 1.0.2 on the server before installing these apps.** The companion plugin fixes desktop login routing, its missing public CSS, and logout/session-expiry links. Server deployment and real-account acceptance are still pending, so this release is marked pre-release.
+
+          Windows x64, Mac Intel and Mac Apple Silicon installers passed native install/mount and short launch smoke tests. App source: 61 automated checks passed. Existing security path checks and Electron 45.0.0 remain.
+
+          GitHub/Sigstore verifies these release bytes and workflow identity. It is not Windows Authenticode, Apple Developer ID/notarization, malware-free certification, or endorsement. Browser and OS warnings may remain. Native updates require manual installation; plugin/UI/settings/tune still load online.
+
+          Powered by BHP Production.
+          EOF
+          gh release create v1.0.2 --draft --prerelease --latest=false --target "$GITHUB_SHA" --title 'VIZRO STUDIO 1.0.2 — Login & 7-second Opening Fix' --notes-file notes.md
+          gh release upload v1.0.2 native/*.exe native/*.dmg native/*.txt native/*.json
+          gh release edit v1.0.2 --draft=false --prerelease --latest=false
+      - name: Check public anonymous download bytes
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,urllib.request
+          for line in pathlib.Path('native/SHA256SUMS.txt').read_text().splitlines():
+              sha,name=line.split();h=hashlib.sha256()
+              with urllib.request.urlopen('https://github.com/hridayne/VIZRO/releases/download/v1.0.2/'+name,timeout=180) as r:
+                  while chunk:=r.read(1048576):h.update(chunk)
+              assert h.hexdigest()==sha,name
+              print('ANONYMOUS_DOWNLOAD_OK',name,sha)
+          PY
